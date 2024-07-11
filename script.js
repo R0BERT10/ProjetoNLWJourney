@@ -37,7 +37,7 @@ let atividades = [
 ]
 
 // Servidor
-const apiUrl = process.env.API_URL
+const apiUrl = window.globalVar
 
 const pegarAtividadesdoServidor = () => {
   // Fazendo a requisição GET usando Fetch
