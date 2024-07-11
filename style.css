@@ -97,14 +97,14 @@ html, input, select, button, option {
   }
   
   .field-wrapper:focus-within {
-    outline: 2px solid yellowgreen;
+    outline: 2px solid lightblue;
   }
   
   button {
     margin-top: 12px;
     border: none;
     padding: 12px 20px;
-    background-color: #AFF445;
+    background-color: lightblue;
     border-radius: 8px;
   
     font-weight: 500;

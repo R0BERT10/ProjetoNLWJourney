@@ -36,8 +36,10 @@ let atividades = [
   },
 ]
 
-// atividades = []
-const apiUrl = "https://robertoreis.vercel.app/api/nlw"//process.env.API_URL;
+// Servidor
+let apiUrl = ""
+try{ apiUrl = process.env.API_URL } catch { isSeverConection = false }
+
 const pegarAtividadesdoServidor = () => {
   // Fazendo a requisição GET usando Fetch
   fetch(apiUrl)
@@ -47,11 +49,12 @@ const pegarAtividadesdoServidor = () => {
         throw new Error('Erro ao acessar a API: ' + response.status);
       }
       // Retorna a resposta em formato JSON
+      isSeverConection = true
       return response.json();
     })
     .then(data => {
       // Manipula os dados recebidos da API
-      console.log(data); 
+      //console.log(data); 
       atividades = data
       atualizarListaDeAtividades()
       closeWarn()
@@ -66,24 +69,41 @@ pegarAtividadesdoServidor()
 const enviarNovaAtividadeSever = (atividade) => {
   fetch(apiUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json', // Define o tipo de conteúdo
-    },
-    body: JSON.stringify({ title: 'Novo post', content: atividade }), // Dados a serem enviados
+    body: JSON.stringify(atividade), // Dados a serem enviados
   })
     .then(response => response.json())
     .then(data => 
       {
-        console.log(data)
-        atualizarListaDeAtividades()
-        closeWarn()
+        //console.log(data)
+        pegarAtividadesdoServidor()
       })
     .catch(error => {
-      console.error('Erro:', error)
+      console.error('Erro: ', error)
+      console.error(atividade)
       showWarn()
     }
-    );
-  
+    )
+}
+
+const concluirAtividadeSever = (id, alteracoes) => {
+  fetch(apiUrl + "/" + id, {
+    method: 'PATCH',
+    body: JSON.stringify(alteracoes),
+})
+.then(response => {
+    if (response.ok) {
+        //console.log('Alterações aplicadas com sucesso!');
+        closeWarn()
+    } else {
+        console.error('Erro ao aplicar as alterações:', response.statusText);
+        showWarn()
+    }
+})
+.catch(error => {
+    console.error('Erro na requisição:', error);
+    showWarn()
+});
+
 }
 
 // arrow function
@@ -133,7 +153,6 @@ const criarItemDeAtividade = (atividade) => {
     `
 }
 
-
 const atualizarListaDeAtividades = () => {
   const section = document.querySelector('section')
   section.innerHTML = ''
@@ -148,7 +167,6 @@ const atualizarListaDeAtividades = () => {
     section.innerHTML += criarItemDeAtividade(atividade)
   }
 }
-
 atualizarListaDeAtividades()
 
 const salvarAtividade = (event) => {
@@ -173,11 +191,14 @@ const salvarAtividade = (event) => {
   if (atividadeExiste) {
     return alert('Dia/Hora não disponível')
   }
-  enviarNovaAtividadeSever(novaAtividade) //Todo assincorna
-  //atividades = [novaAtividade, ...atividades]
-  //atualizarListaDeAtividades()
 
-  if (!isSeverConection) { showWarn() }
+  //console.log("Sever conection: ", isSeverConection)
+  if (isSeverConection) { 
+    enviarNovaAtividadeSever(novaAtividade)
+  } else {
+    atividades = [novaAtividade, ...atividades]
+    atualizarListaDeAtividades()
+  }
 }
 
 const criarDiasSelecao = () => {
@@ -209,7 +230,6 @@ const criarDiasSelecao = () => {
 }
 criarDiasSelecao()
 
-
 const criarHorasSelecao = () => {
   let horasDisponiveis = ''
 
@@ -240,8 +260,8 @@ const concluirAtividade = (event) => {
   }
 
   atividade.is_finalized = !atividade.is_finalized
+  concluirAtividadeSever(atividade.id, atividade)
 }
-
 
 const criarWarn = () => {
   document.querySelector(".warn").innerHTML = `
@@ -259,14 +279,14 @@ criarWarn()
 
 const closeWarn = () => {
   const elmentWarn = document.querySelector(".warn")
-  console.log("entrou aqui")
+  //console.log("entrou aqui closeWarn")
   //elmentWarn.style.display = "none"
   elmentWarn.classList.add('-hide')
 }
 
 const showWarn = () => {
   const elmentWarn = document.querySelector(".warn")
-  console.log("entrou aqui")
+  //console.log("entrou aqui showWarn")
   //elmentWarn.style.display = "block"
   elmentWarn.classList.remove('-hide')
 }
