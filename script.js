@@ -17,23 +17,74 @@ const formatador = (data) => {
 let isSeverConection = false
 let atividades = [
   {
-    nome: "Almoço",
-    data: new Date("2024-07-08 10:00"),
-    finalizada: true
+    id: "1",
+    title: "Almoço",
+    occurs_at: new Date("2024-07-08 10:00"),
+    is_finalized: true
   },
   {
-    nome: 'Academia em grupo',
-    data: new Date("2024-07-09 12:00"),
-    finalizada: false
+    id: "2",
+    title: 'Academia em grupo',
+    occurs_at: new Date("2024-07-09 12:00"),
+    is_finalized: false
   },
   {
-    nome: 'Gamming session',
-    data: new Date("2024-07-09 16:00"),
-    finalizada: true
+    id: "3",
+    title: 'Gamming session',
+    occurs_at: new Date("2024-07-09 16:00"),
+    is_finalized: true
   },
 ]
 
 // atividades = []
+const apiUrl = "https://robertoreis.vercel.app/api/nlw"//process.env.API_URL;
+const pegarAtividadesdoServidor = () => {
+  // Fazendo a requisição GET usando Fetch
+  fetch(apiUrl)
+    .then(response => {
+      // Verifica se a requisição foi bem-sucedida
+      if (!response.ok) {
+        throw new Error('Erro ao acessar a API: ' + response.status);
+      }
+      // Retorna a resposta em formato JSON
+      return response.json();
+    })
+    .then(data => {
+      // Manipula os dados recebidos da API
+      console.log(data); 
+      atividades = data
+      atualizarListaDeAtividades()
+      closeWarn()
+    })
+    .catch(error => {
+      console.error('Erro na requisição:', error);
+      showWarn()
+    });
+}
+pegarAtividadesdoServidor()
+
+const enviarNovaAtividadeSever = (atividade) => {
+  fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json', // Define o tipo de conteúdo
+    },
+    body: JSON.stringify({ title: 'Novo post', content: atividade }), // Dados a serem enviados
+  })
+    .then(response => response.json())
+    .then(data => 
+      {
+        console.log(data)
+        atualizarListaDeAtividades()
+        closeWarn()
+      })
+    .catch(error => {
+      console.error('Erro:', error)
+      showWarn()
+    }
+    );
+  
+}
 
 // arrow function
 const criarItemDeAtividade = (atividade) => {
@@ -41,17 +92,17 @@ const criarItemDeAtividade = (atividade) => {
   let input = `
   <input 
   onchange="concluirAtividade(event)"
-  value="${atividade.data}"
+  value="${atividade.occurs_at}"
   type="checkbox" 
   `
 
-  if (atividade.finalizada) {
+  if (atividade.is_finalized) {
     input += 'checked'
   }
 
   input += '>'
 
-  const formatar = formatador(atividade.data);
+  const formatar = formatador(atividade.occurs_at);
 
   return `
     <div class="card-bg">
@@ -66,7 +117,7 @@ const criarItemDeAtividade = (atividade) => {
         <path d="M8.41664 1.81836C9.46249 1.61597 10.5374 1.61597 11.5833 1.81836M11.5833 18.1817C10.5374 18.3841 9.46249 18.3841 8.41664 18.1817M14.6741 3.10086C15.5587 3.70022 16.3197 4.46409 16.9158 5.35086M1.8183 11.5834C1.6159 10.5375 1.6159 9.46255 1.8183 8.4167M16.8991 14.6742C16.2998 15.5588 15.5359 16.3198 14.6491 16.9159M18.1816 8.4167C18.384 9.46255 18.384 10.5375 18.1816 11.5834M3.1008 5.32586C3.70016 4.44131 4.46403 3.68026 5.3508 3.0842M5.3258 16.8992C4.44124 16.2998 3.6802 15.536 3.08414 14.6492" stroke="#A1A1AA" style="stroke:#A1A1AA;stroke:color(display-p3 0.6314 0.6314 0.6667);stroke-opacity:1;" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       
-      <span>${atividade.nome}</span>
+      <span>${atividade.title}</span>
       </div>
 
       <time class="short">
@@ -104,27 +155,27 @@ const salvarAtividade = (event) => {
   event.preventDefault()
   const dadosDoFormulario = new FormData(event.target)
 
-  const nome = dadosDoFormulario.get('atividade')
+  const title = dadosDoFormulario.get('atividade')
   const dia = dadosDoFormulario.get('dia')
   const hora = dadosDoFormulario.get('hora')
-  const data = `${dia} ${hora}`
+  const occurs_at = `${dia} ${hora}`
 
   const novaAtividade = {
-    nome,
-    data,
-    finalizada: false
+    title,
+    occurs_at,
+    is_finalized: false
   }
 
   const atividadeExiste = atividades.find((atividade) => {
-    return atividade.data == novaAtividade.data
+    return atividade.occurs_at == novaAtividade.occurs_at
   })
 
   if (atividadeExiste) {
     return alert('Dia/Hora não disponível')
   }
-
-  atividades = [novaAtividade, ...atividades]
-  atualizarListaDeAtividades()
+  enviarNovaAtividadeSever(novaAtividade) //Todo assincorna
+  //atividades = [novaAtividade, ...atividades]
+  //atualizarListaDeAtividades()
 
   if (!isSeverConection) { showWarn() }
 }
@@ -181,14 +232,14 @@ const concluirAtividade = (event) => {
   const dataDesteInput = input.value
 
   const atividade = atividades.find((atividade) => {
-    return atividade.data == dataDesteInput
+    return atividade.occurs_at == dataDesteInput
   })
 
   if (!atividade) {
     return
   }
 
-  atividade.finalizada = !atividade.finalizada
+  atividade.is_finalized = !atividade.is_finalized
 }
 
 
