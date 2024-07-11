@@ -37,8 +37,7 @@ let atividades = [
 ]
 
 // Servidor
-let apiUrl = ""
-try{ apiUrl = process.env.API_URL } catch { isSeverConection = false }
+const apiUrl = process.env.API_URL
 
 const pegarAtividadesdoServidor = () => {
   // Fazendo a requisição GET usando Fetch
